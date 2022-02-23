@@ -6,16 +6,19 @@ import { useRouter } from "next/router";
 // import coffeeStores from "../../data/coffee-store.json";
 import styles from "../../styles/coffee-store.module.css";
 import { fetchCoffeeStores } from "../../lib/coffee-stores";
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import StoreContext from "../../Context/Store/StoreContext";
+import { isEmpty } from "../../utils";
 
 export async function getStaticProps({ params }) {
   const coffeeStores = await fetchCoffeeStores();
+  const findCoffeeStoreById = coffeeStores.find((store) => {
+    return store.id.toString() === params.id;
+  });
 
   return {
     props: {
-      coffeeStore:
-        coffeeStores.find((store) => String(store.id) === params.id) || {},
+      coffeeStore: findCoffeeStoreById ? findCoffeeStoreById : {},
     },
   };
 }
@@ -41,23 +44,43 @@ export async function getStaticPaths() {
   };
 }
 
-const CoffeeStore = (props) => {
+const CoffeeStore = (initialProps) => {
   const router = useRouter();
   const { id } = router.query;
 
+  const [coffeeStore, setCoffeeStore] = useState(
+    initialProps.coffeeStore || {}
+  );
+  const { nearbyStores } = useContext(StoreContext);
+
+  useEffect(() => {
+    if (isEmpty(initialProps.coffeeStore)) {
+      if (nearbyStores.length > 0) {
+        const coffeeStoreFromContext = nearbyStores.find((store) => {
+          return store.id.toString() === id; //dynamic id
+        });
+
+        if (coffeeStoreFromContext) {
+          setCoffeeStore(coffeeStoreFromContext);
+          // handleCreateCoffeeStore(coffeeStoreFromContext);
+        }
+      }
+    } else {
+      // SSG
+      // handleCreateCoffeeStore(initialProps.coffeeStore);
+    }
+  }, [id]);
+
+  const {
+    name = "",
+    imgUrl = "",
+    address = "",
+    neighbourhood = "",
+  } = coffeeStore;
+
   // If fallback is true then it taked some time to load data and push statically if not present
   // So show loading state till then otherwise will give error
-  const { nearbyStores } = useContext(StoreContext);
   if (router.isFallback) return <div>Loading...</div>;
-
-  const nearbyStore = nearbyStores
-    ? nearbyStores.find((store) => String(store.id) === id)
-    : {};
-
-  const { name, imgUrl, address, neighbourhood } =
-    props.coffeeStore && props.coffeeStore.name
-      ? props.coffeeStore
-      : nearbyStore;
 
   const handleUpvoteButton = () => {};
 
