@@ -1,8 +1,12 @@
 import Head from "next/head";
 import Image from "next/image";
+import { useContext, useEffect, useState } from "react";
 import Banner from "../components/Banner/Banner";
-import Card from "../components/Card/Card";
+import Stores from "../components/Stores";
+import StoreContext from "../Context/Store/StoreContext";
+import useTrackLocation from "../Hooks/UseTrackLocation";
 import { fetchCoffeeStores } from "../lib/coffee-stores";
+import { StoreActions } from "../Reducers";
 import styles from "../styles/Home.module.css";
 // import coffeeStores from "../data/coffee-store.json";
 
@@ -21,7 +25,42 @@ export async function getStaticProps(context) {
 }
 
 export default function Home(props) {
-  const nearbySearch = () => {};
+  const { locationErrorMsg, handleTrackLocation } = useTrackLocation();
+  // const [nearbyStores, setNearbyStores] = useState(null);
+  const { latLong, nearbyStores, dispatch } = useContext(StoreContext);
+
+  useEffect(async () => {
+    if (latLong) {
+      try {
+        dispatch({
+          type: StoreActions.SET_IS_FINDING,
+          payload: { isFinding: true },
+        });
+        const fetchedCoffeeStores = await fetchCoffeeStores(latLong, 25);
+        // setNearbyStores(fetchedCoffeeStores);
+        dispatch({
+          type: StoreActions.SET_NEARBY_STORES,
+          payload: { nearbyStores: fetchedCoffeeStores },
+        });
+        dispatch({
+          type: StoreActions.SET_IS_FINDING,
+          payload: { isFinding: false },
+        });
+      } catch {}
+    }
+  }, [latLong]);
+
+  const nearbySearch = () => {
+    dispatch({
+      type: StoreActions.SET_IS_FINDING,
+      payload: { isFinding: true },
+    });
+    handleTrackLocation();
+    dispatch({
+      type: StoreActions.SET_IS_FINDING,
+      payload: { isFinding: false },
+    });
+  };
 
   return (
     <div className={styles.container}>
@@ -36,30 +75,17 @@ export default function Home(props) {
 
       <main className={styles.main}>
         <Banner buttonText="Search Nearby" buttonHandler={nearbySearch} />
+        {locationErrorMsg && <p>Something went wrong: {locationErrorMsg}</p>}
         <div className={styles.heroImage}>
           <Image src="/static/hero-image.png" width={700} height={400} />
         </div>
-        {props.coffeeStores.length > 0 && (
-          <div style={{ marginTop: "80px" }}>
-            <h2 className={styles.heading2}>New Delhi Stores</h2>
-            <div className={styles.cardLayout}>
-              {props.coffeeStores.map((store) => {
-                return (
-                  <Card
-                    key={store.fsq_id}
-                    name={store.name}
-                    href={`/coffee-store/${store.fsq_id}`}
-                    imgUrl={
-                      store.imgUrl ||
-                      "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
-                    }
-                    className={styles.card}
-                  />
-                );
-              })}
-            </div>
-          </div>
+        {nearbyStores && (
+          <Stores placeName="Stores near you" coffeeStores={nearbyStores} />
         )}
+        <Stores
+          placeName="New Delhi Stores"
+          coffeeStores={props.coffeeStores}
+        />
       </main>
     </div>
   );

@@ -6,15 +6,16 @@ import { useRouter } from "next/router";
 // import coffeeStores from "../../data/coffee-store.json";
 import styles from "../../styles/coffee-store.module.css";
 import { fetchCoffeeStores } from "../../lib/coffee-stores";
+import { useContext } from "react";
+import StoreContext from "../../Context/Store/StoreContext";
 
 export async function getStaticProps({ params }) {
   const coffeeStores = await fetchCoffeeStores();
 
   return {
     props: {
-      coffeeStore: coffeeStores.find(
-        (store) => String(store.fsq_id) === params.id
-      ),
+      coffeeStore:
+        coffeeStores.find((store) => String(store.id) === params.id) || {},
     },
   };
 }
@@ -30,7 +31,7 @@ export async function getStaticPaths() {
   const paths = coffeeStores.map((store) => {
     return {
       params: {
-        id: String(store.fsq_id),
+        id: String(store.id),
       },
     };
   });
@@ -48,7 +49,15 @@ const CoffeeStore = (props) => {
   // So show loading state till then otherwise will give error
   if (router.isFallback) return <div>Loading...</div>;
 
-  const { name, imgUrl, location } = props.coffeeStore;
+  const { nearbyStores } = useContext(StoreContext);
+  const nearbyStore = nearbyStores
+    ? nearbyStores.find((store) => String(store.id) === id)
+    : {};
+
+  const { name, imgUrl, address, neighbourhood } =
+    props.coffeeStore && props.coffeeStore.name
+      ? props.coffeeStore
+      : nearbyStore;
 
   const handleUpvoteButton = () => {};
 
@@ -88,11 +97,9 @@ const CoffeeStore = (props) => {
               height="24"
               alt="places icon"
             />
-            <p className={styles.text}>
-              {location.address || location.formatted_address}
-            </p>
+            <p className={styles.text}>{address || address}</p>
           </div>
-          {location.neighbourhood && (
+          {neighbourhood && (
             <div className={styles.iconWrapper}>
               <Image
                 src="/static/icons/nearMe.svg"
@@ -100,7 +107,7 @@ const CoffeeStore = (props) => {
                 height="24"
                 alt="near me icon"
               />
-              <p className={styles.text}>{location.neighbourhood}</p>
+              <p className={styles.text}>{neighbourhood}</p>
             </div>
           )}
           <div className={styles.iconWrapper}>
