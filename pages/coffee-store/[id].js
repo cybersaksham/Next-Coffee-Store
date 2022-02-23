@@ -47,9 +47,9 @@ const CoffeeStore = (props) => {
 
   // If fallback is true then it taked some time to load data and push statically if not present
   // So show loading state till then otherwise will give error
+  const { nearbyStores } = useContext(StoreContext);
   if (router.isFallback) return <div>Loading...</div>;
 
-  const { nearbyStores } = useContext(StoreContext);
   const nearbyStore = nearbyStores
     ? nearbyStores.find((store) => String(store.id) === id)
     : {};
