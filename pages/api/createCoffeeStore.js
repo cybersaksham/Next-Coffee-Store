@@ -2,16 +2,17 @@ const { table, formatRecords } = require("../../lib/airtable");
 
 const createCoffeeStore = async (req, res) => {
   if (req.method == "POST") {
-    const { id, name, address, neighbourhood, imgUrl, votes } = req.body;
+    const { id, name, address, neighbourhood, imgUrl } = req.body;
 
-    if (id) {
-      try {
+    try {
+      if (id) {
         // Find a record
         const findRecord = await table
           .select({
-            filterByFormula: `=id=${id}`,
+            filterByFormula: `=id="${id}"`,
           })
           .firstPage();
+        console.log(findRecord);
 
         if (findRecord && findRecord.length !== 0) {
           return res.json(formatRecords(findRecord)[0]);
@@ -25,7 +26,7 @@ const createCoffeeStore = async (req, res) => {
                   name,
                   address,
                   neighbourhood,
-                  votes,
+                  votes: 0,
                   imgUrl,
                 },
               },
@@ -33,13 +34,13 @@ const createCoffeeStore = async (req, res) => {
             return res.json(formatRecords(createRecords)[0]);
           }
         }
-      } catch (err) {
-        return res
-          .status(500)
-          .json({ message: "Something went wrong", error: err });
       }
+      return res.status(400).json({ message: "Invalid params" });
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: "Something went wrong", error: err });
     }
-    return res.status(400).json({ message: "Invalid params" });
   }
 };
 

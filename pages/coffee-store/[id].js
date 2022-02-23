@@ -53,23 +53,53 @@ const CoffeeStore = (initialProps) => {
   );
   const { nearbyStores } = useContext(StoreContext);
 
+  const handleCreateCoffeeStore = async (data) => {
+    try {
+      const { id, name, address, neighbourhood, imgUrl } = data;
+
+      const response = await fetch("/api/createCoffeeStore", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          name,
+          address: address || "",
+          neighbourhood: neighbourhood || "",
+          imgUrl,
+        }),
+      });
+
+      const json = await response.json();
+      if (response.status === 200) setCoffeeStore(json);
+    } catch (err) {
+      console.error("Error in creating", err);
+    }
+  };
+
   useEffect(() => {
     if (isEmpty(initialProps.coffeeStore)) {
-      if (nearbyStores.length > 0) {
-        const coffeeStoreFromContext = nearbyStores.find((store) => {
-          return store.id.toString() === id; //dynamic id
-        });
+      if (nearbyStores) {
+        if (nearbyStores.length > 0) {
+          const coffeeStoreFromContext = nearbyStores.find((store) => {
+            return store.id.toString() === id; //dynamic id
+          });
 
-        if (coffeeStoreFromContext) {
-          setCoffeeStore(coffeeStoreFromContext);
-          // handleCreateCoffeeStore(coffeeStoreFromContext);
+          if (coffeeStoreFromContext) {
+            setCoffeeStore(coffeeStoreFromContext);
+            handleCreateCoffeeStore(coffeeStoreFromContext);
+          }
         }
+      } else {
+        // CSG
+        handleCreateCoffeeStore({ id });
       }
     } else {
       // SSG
-      // handleCreateCoffeeStore(initialProps.coffeeStore);
+      handleCreateCoffeeStore(initialProps.coffeeStore);
     }
-  }, [id]);
+  }, [id, initialProps, initialProps.coffeeStore]);
 
   const {
     name = "",
@@ -78,11 +108,15 @@ const CoffeeStore = (initialProps) => {
     neighbourhood = "",
   } = coffeeStore;
 
+  const [votes, setVotes] = useState(0);
+
   // If fallback is true then it taked some time to load data and push statically if not present
   // So show loading state till then otherwise will give error
   if (router.isFallback) return <div>Loading...</div>;
 
-  const handleUpvoteButton = () => {};
+  const handleUpvoteButton = () => {
+    setVotes(votes + 1);
+  };
 
   return (
     <div className={styles.layout}>
@@ -141,7 +175,7 @@ const CoffeeStore = (initialProps) => {
               alt="star icon"
             />
             {/* <p className={styles.text}>{votingCount}</p> */}
-            <p className={styles.text}>{1}</p>
+            <p className={styles.text}>{votes}</p>
           </div>
 
           <button className={styles.upvoteButton} onClick={handleUpvoteButton}>
