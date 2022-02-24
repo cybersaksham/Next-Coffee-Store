@@ -67,7 +67,12 @@ export default function Home(props) {
         <Banner buttonText="Search Nearby" buttonHandler={nearbySearch} />
         {locationErrorMsg && <p>Something went wrong: {locationErrorMsg}</p>}
         <div className={styles.heroImage}>
-          <Image src="/static/hero-image.png" width={700} height={400} />
+          <Image
+            src="/static/hero-image.png"
+            alt="iCoffee"
+            width={700}
+            height={400}
+          />
         </div>
         {nearbyStores && (
           <Stores placeName="Stores near you" coffeeStores={nearbyStores} />
