@@ -8,7 +8,8 @@ import styles from "../../styles/coffee-store.module.css";
 import { fetchCoffeeStores } from "../../lib/coffee-stores";
 import { useContext, useState, useEffect } from "react";
 import StoreContext from "../../Context/Store/StoreContext";
-import { isEmpty } from "../../utils";
+import { fetcher, isEmpty } from "../../utils";
+import useSWR from "swr";
 
 export async function getStaticProps({ params }) {
   const coffeeStores = await fetchCoffeeStores();
@@ -110,13 +111,35 @@ const CoffeeStore = (initialProps) => {
 
   const [votes, setVotes] = useState(0);
 
+  const { data, error } = useSWR(`/api/getCoffeeStoreById?id=${id}`, fetcher);
+
+  useEffect(() => {
+    if (data && data.name) {
+      setCoffeeStore(data);
+      setVotes(data.votes);
+    }
+  }, [data]);
+
   // If fallback is true then it taked some time to load data and push statically if not present
   // So show loading state till then otherwise will give error
   if (router.isFallback) return <div>Loading...</div>;
 
-  const handleUpvoteButton = () => {
+  const handleUpvoteButton = async () => {
     setVotes(votes + 1);
+    try {
+      const response = await fetch("/api/increaseVotes?id=" + id, {
+        method: "PUT",
+      });
+
+      const json = await response.json();
+    } catch (err) {
+      console.error("Error increasing votes", err);
+    }
   };
+
+  if (error) {
+    return <div>Coffee store not found</div>;
+  }
 
   return (
     <div className={styles.layout}>

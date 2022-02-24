@@ -1,4 +1,4 @@
-const { table, formatRecords } = require("../../lib/airtable");
+const { table, formatRecords, findRecordsByID } = require("../../lib/airtable");
 
 const createCoffeeStore = async (req, res) => {
   if (req.method == "POST") {
@@ -7,15 +7,10 @@ const createCoffeeStore = async (req, res) => {
     try {
       if (id) {
         // Find a record
-        const findRecord = await table
-          .select({
-            filterByFormula: `=id="${id}"`,
-          })
-          .firstPage();
-        console.log(findRecord);
+        const findRecord = await findRecordsByID(id);
 
         if (findRecord && findRecord.length !== 0) {
-          return res.json(formatRecords(findRecord)[0]);
+          return res.json(findRecord[0]);
         } else {
           if (name) {
             // Creating a record
@@ -42,6 +37,7 @@ const createCoffeeStore = async (req, res) => {
         .json({ message: "Something went wrong", error: err });
     }
   }
+  return res.status(404).send("Method not allowed");
 };
 
 export default createCoffeeStore;

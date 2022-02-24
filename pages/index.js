@@ -1,4 +1,3 @@
-import Head from "next/head";
 import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 import Banner from "../components/Banner/Banner";
@@ -64,15 +63,6 @@ export default function Home(props) {
 
   return (
     <div className={styles.container}>
-      <Head>
-        <title>iCoffee - The Future of Coffee</title>
-        <meta
-          name="description"
-          content="A platform for your favourite coffee stores"
-        />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <main className={styles.main}>
         <Banner buttonText="Search Nearby" buttonHandler={nearbySearch} />
         {locationErrorMsg && <p>Something went wrong: {locationErrorMsg}</p>}
